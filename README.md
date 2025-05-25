@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # My Flutter App
 
 This is a Flutter application that demonstrates the use of various Flutter features and best practices.
@@ -37,3 +38,6 @@ flutter run
 ## Contributing
 
 Feel free to fork the repository and submit pull requests for any improvements or features you would like to add.
+=======
+# projeto_gs_flutter
+>>>>>>> eb913e03ccf4fc6aecd1c89c93570fae770fb9a9
