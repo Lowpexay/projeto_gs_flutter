@@ -15,6 +15,7 @@ class _HistoryPageState extends State<HistoryPage> {
   LatLng selectedLatLng = LatLng(-15.793889, -47.882778); // Default: Brasília
   String locationName = "Buscando localização...";
   bool loading = false;
+  String? errorMsg;
   List<Map<String, dynamic>> history = [];
 
   // Tier lists
@@ -31,13 +32,20 @@ class _HistoryPageState extends State<HistoryPage> {
   Future<void> fetchAll() async {
     setState(() {
       loading = true;
+      errorMsg = null;
       history = [];
     });
-    await Future.wait([
-      fetchLocationName(),
-      fetchHistory(),
-      fetchTierList(),
-    ]);
+    try {
+      await Future.wait([
+        fetchLocationName(),
+        fetchHistory(),
+        fetchTierList(),
+      ]);
+    } catch (e) {
+      setState(() {
+        errorMsg = 'Erro ao acessar a API. Tente novamente mais tarde.';
+      });
+    }
     setState(() {
       loading = false;
     });
@@ -111,8 +119,16 @@ class _HistoryPageState extends State<HistoryPage> {
             }
           }
         }
+      } else {
+        setState(() {
+          errorMsg = 'Erro ao acessar a API de histórico.';
+        });
       }
-    } catch (_) {}
+    } catch (e) {
+      setState(() {
+        errorMsg = 'Erro ao acessar a API de histórico.';
+      });
+    }
   }
 
   Future<void> fetchTierList() async {
@@ -157,8 +173,16 @@ class _HistoryPageState extends State<HistoryPage> {
           tierCalor = calor.take(10).toList();
           tierFrio = frio.take(10).toList();
         }
+      } else {
+        setState(() {
+          errorMsg = 'Erro ao acessar a API de tier list.';
+        });
       }
-    } catch (_) {}
+    } catch (e) {
+      setState(() {
+        errorMsg = 'Erro ao acessar a API de tier list.';
+      });
+    }
   }
 
   @override
@@ -170,6 +194,15 @@ class _HistoryPageState extends State<HistoryPage> {
             ? const Center(child: CircularProgressIndicator())
             : Column(
                 children: [
+                  if (errorMsg != null)
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Text(
+                        errorMsg!,
+                        style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   // Mapa fixo no topo
                   Padding(
                     padding: const EdgeInsets.only(top: 16, left: 8, right: 8, bottom: 0),
@@ -301,25 +334,37 @@ class _HistoryPageState extends State<HistoryPage> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text('Top 10 dias de chuva:'),
-                                ...tierChuva.map((e) => ListTile(
-                                      leading: const Icon(Icons.water_drop, color: Colors.blue),
-                                      title: Text('${e['precip']} mm'),
-                                      subtitle: Text('Data: ${e['date']}'),
-                                    )),
+                                tierChuva.isEmpty
+                                    ? const Text('Sem dados de chuva extrema para este local.')
+                                    : Column(
+                                        children: tierChuva.map((e) => ListTile(
+                                              leading: const Icon(Icons.water_drop, color: Colors.blue),
+                                              title: Text('${e['precip']} mm'),
+                                              subtitle: Text('Data: ${e['date']}'),
+                                            )).toList(),
+                                      ),
                                 const SizedBox(height: 8),
                                 Text('Top 10 dias de calor:'),
-                                ...tierCalor.map((e) => ListTile(
-                                      leading: const Icon(Icons.wb_sunny, color: Colors.orange),
-                                      title: Text('${e['max']}°C'),
-                                      subtitle: Text('Data: ${e['date']}'),
-                                    )),
+                                tierCalor.isEmpty
+                                    ? const Text('Sem dados de calor extremo para este local.')
+                                    : Column(
+                                        children: tierCalor.map((e) => ListTile(
+                                              leading: const Icon(Icons.wb_sunny, color: Colors.orange),
+                                              title: Text('${e['max']}°C'),
+                                              subtitle: Text('Data: ${e['date']}'),
+                                            )).toList(),
+                                      ),
                                 const SizedBox(height: 8),
                                 Text('Top 10 dias de frio:'),
-                                ...tierFrio.map((e) => ListTile(
-                                      leading: const Icon(Icons.ac_unit, color: Colors.lightBlue),
-                                      title: Text('${e['min']}°C'),
-                                      subtitle: Text('Data: ${e['date']}'),
-                                    )),
+                                tierFrio.isEmpty
+                                    ? const Text('Sem dados de frio extremo para este local.')
+                                    : Column(
+                                        children: tierFrio.map((e) => ListTile(
+                                              leading: const Icon(Icons.ac_unit, color: Colors.lightBlue),
+                                              title: Text('${e['min']}°C'),
+                                              subtitle: Text('Data: ${e['date']}'),
+                                            )).toList(),
+                                      ),
                               ],
                             ),
                           ),
