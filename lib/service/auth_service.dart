@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:weather_app/auth_exception.dart';
 
@@ -20,9 +21,19 @@ class AuthService with ChangeNotifier {
     });
   }
 
-  Future<void> registrar(String email, String senha) async {
+  Future<void> registrar(String email, String senha, String nome, String sobrenome, bool isPCD) async {
     try {
-      await _auth.createUserWithEmailAndPassword(email: email, password: senha);
+      // Cria usuário no Auth
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(email: email, password: senha);
+
+      // Salva dados extras no Firestore
+      await FirebaseFirestore.instance.collection('usuarios').doc(userCredential.user!.uid).set({
+        'nome': nome,
+        'sobrenome': sobrenome,
+        'isPCD': isPCD,
+        'email': email,
+        'criadoEm': FieldValue.serverTimestamp(),
+      });
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         throw AuthException('A senha é muito fraca!');

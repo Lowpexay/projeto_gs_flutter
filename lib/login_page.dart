@@ -13,6 +13,9 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final senhaController = TextEditingController();
+  final nomeController = TextEditingController();
+  final sobrenomeController = TextEditingController();
+  bool isPCD = false;
 
   bool isLogin = true;
   String error = '';
@@ -25,8 +28,23 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(title: Text(isLogin ? 'Login' : 'Cadastro')),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
+        child: ListView(
           children: [
+            if (!isLogin) ...[
+              TextField(
+                controller: nomeController,
+                decoration: const InputDecoration(labelText: 'Nome'),
+              ),
+              TextField(
+                controller: sobrenomeController,
+                decoration: const InputDecoration(labelText: 'Sobrenome'),
+              ),
+              SwitchListTile(
+                title: const Text('Pessoa com deficiência (PCD)'),
+                value: isPCD,
+                onChanged: (v) => setState(() => isPCD = v),
+              ),
+            ],
             TextField(
               controller: emailController,
               decoration: const InputDecoration(labelText: 'Email'),
@@ -46,7 +64,9 @@ class _LoginPageState extends State<LoginPage> {
                   if (isLogin) {
                     await auth.login(email, senha);
                   } else {
-                    await auth.registrar(email, senha);
+                    String nome = nomeController.text;
+                    String sobrenome = sobrenomeController.text;
+                    await auth.registrar(email, senha, nome, sobrenome, isPCD);
                   }
                 } on AuthException catch (e) {
                   setState(() {

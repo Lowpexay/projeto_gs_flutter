@@ -5,6 +5,8 @@ import 'chat_screen.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ReportPage extends StatefulWidget {
   const ReportPage({Key? key}) : super(key: key);
@@ -25,6 +27,9 @@ class _ReportPageState extends State<ReportPage> {
   String? _feedbackMsg;
   String? _aiDebugMsg;
 
+  String? _nomeUsuario;
+  bool _isPCD = false;
+
   final List<String> _eventTypes = [
     'Chuva muito forte',
     'Enchente',
@@ -35,6 +40,22 @@ class _ReportPageState extends State<ReportPage> {
   ];
 
   static const String openWeatherApiKey = '34aa5fc43604a7049e797bb7f486e191';
+
+  @override
+  void initState() {
+    super.initState();
+    _buscarDadosUsuario();
+  }
+
+  Future<void> _buscarDadosUsuario() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final doc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
+    setState(() {
+      _nomeUsuario = doc.data()?['nome'] ?? 'Usuário';
+      _isPCD = doc.data()?['isPCD'] ?? false;
+    });
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -167,20 +188,20 @@ class _ReportPageState extends State<ReportPage> {
       body: json.encode(body),
     );
 
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    final aiText = data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
-    setState(() {
-      _aiDebugMsg = 'Resposta da IA: $aiText';
-    });
-    final resposta = aiText.trim().toUpperCase();
-    return resposta == 'CRITICO' || resposta == 'CRÍTICO';
-  } else {
-    setState(() {
-      _aiDebugMsg = 'Erro na requisição: ${response.statusCode}\n${response.body}';
-    });
-    return false;
-  }
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final aiText = data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
+      setState(() {
+        _aiDebugMsg = 'Resposta da IA: $aiText';
+      });
+      final resposta = aiText.trim().toUpperCase();
+      return resposta == 'CRITICO' || resposta == 'CRÍTICO';
+    } else {
+      setState(() {
+        _aiDebugMsg = 'Erro na requisição: ${response.statusCode}\n${response.body}';
+      });
+      return false;
+    }
   }
 
   Future<void> _submitReport() async {
@@ -209,7 +230,7 @@ class _ReportPageState extends State<ReportPage> {
 
     setState(() {
       _isLoading = false;
-      _feedbackMsg = 'Reporte enviado com sucesso para as autoridades!';
+      _feedbackMsg = '$_nomeUsuario, seu reporte foi enviado com sucesso para as autoridades!';
       _selectedEvent = null;
       _description = null;
       _imageFile = null;
@@ -326,15 +347,31 @@ class _ReportPageState extends State<ReportPage> {
                 if (_feedbackMsg != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      _feedbackMsg!,
-                      style: TextStyle(
-                        color: _feedbackMsg!.contains('sucesso')
-                            ? Colors.green
-                            : Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
+                    child: Column(
+                      children: [
+                        Text(
+                          _feedbackMsg!,
+                          style: TextStyle(
+                            color: _feedbackMsg!.contains('sucesso')
+                                ? Colors.green
+                                : Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        if (_feedbackMsg!.contains('sucesso') && _isPCD)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              'Como pessoa com deficiência, você está na fila de prioridade.',
+                              style: const TextStyle(
+                                color: Colors.orange,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 _isLoading
@@ -348,16 +385,16 @@ class _ReportPageState extends State<ReportPage> {
                           minimumSize: const Size.fromHeight(48),
                         ),
                       ),
-              if (_feedbackMsg != null && _feedbackMsg!.contains('Chatbot'))
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => ChatScreen()),
-                    );
-                  },
-                  icon: const Icon(Icons.chat),
-                  label: const Text('Ir para o Chatbot'),
-                ),
+                if (_feedbackMsg != null && _feedbackMsg!.contains('Chatbot'))
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => ChatScreen()),
+                      );
+                    },
+                    icon: const Icon(Icons.chat),
+                    label: const Text('Ir para o Chatbot'),
+                  ),
               ],
             ),
           ),

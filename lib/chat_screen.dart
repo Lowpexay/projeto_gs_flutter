@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, this.initialMessage});
@@ -16,13 +18,30 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   List<Map<String, String>> messages = [];
   bool isLoading = false;
+  String? nomeUsuario;
 
   @override
   void initState() {
     super.initState();
+    buscarNomeUsuario();
     if (widget.initialMessage != null && widget.initialMessage!.isNotEmpty) {
       sendMessage(widget.initialMessage!);
     }
+  }
+
+  Future<void> buscarNomeUsuario() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final doc = await FirebaseFirestore.instance.collection('usuarios').doc(uid).get();
+    setState(() {
+      nomeUsuario = doc.data()?['nome'] ?? 'Usuário';
+      // Mensagem de boas-vindas personalizada
+      messages.insert(0, {
+        "sender": "ai",
+        "text": "Olá, $nomeUsuario! Como posso ajudar?",
+        "tone": "feliz",
+      });
+    });
   }
 
   Map<String, String> extractToneAndText(String aiText) {
