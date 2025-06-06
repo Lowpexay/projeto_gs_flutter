@@ -19,6 +19,7 @@ Este é um aplicativo Flutter para monitoramento de eventos climáticos, com fun
 - [Cloud Firestore](https://firebase.google.com/products/firestore)
 - [Google Gemini API](https://ai.google.dev/)
 - [OpenWeatherMap API](https://openweathermap.org/api)
+- [OpenMeteo API]()
 - [Geolocator](https://pub.dev/packages/geolocator)
 - [Image Picker](https://pub.dev/packages/image_picker)
 - [Provider](https://pub.dev/packages/provider)
