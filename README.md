@@ -44,8 +44,8 @@ lib/
 
 1. **Clone o repositório**
    ```sh
-   git clone https://github.com/seu-usuario/seu-repo.git
-   cd seu-repo
+   git clone https://github.com/Lowpexay](https://github.com/Lowpexay/projeto_gs_flutter)
+   cd projeto_gs_flutter
    ```
 
 2. **Configure o Firebase**
