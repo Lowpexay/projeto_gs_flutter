@@ -1,14 +1,31 @@
 import 'package:flutter/material.dart';
-import 'alerts_page.dart'; 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
+import 'package:weather_app/login_page.dart';
+
+import 'service/auth_service.dart';
+import 'alerts_page.dart';
 import 'history_page.dart';
-import 'chat_screen.dart'; 
+import 'chat_screen.dart';
 import 'report_page.dart';
-
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    print('Erro ao inicializar o Firebase: $e');
+  }
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -18,8 +35,24 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Monitoramento Climático',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const HomeScreen(),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Colors.grey[200],
+      ),
+      debugShowCheckedModeBanner: false,
+      home: Consumer<AuthService>(
+        builder: (context, auth, _) {
+          if (auth.isLoading) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          } else if (auth.usuario == null) {
+            return const LoginPage();
+          } else {
+            return const HomeScreen();
+          }
+        },
+      ),
     );
   }
 }
@@ -35,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   static final List<Widget> _pages = <Widget>[
-    AlertsPage(),   // Mapa
+    AlertsPage(),
     ChatScreen(),
     HistoryPage(),
     ReportPage(),
@@ -52,6 +85,15 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Monitoramento Climático'),
+        backgroundColor: Colors.blueGrey[900],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await context.read<AuthService>().logout();
+            },
+          )
+        ],
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
@@ -70,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Chatbot',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.history), 
+            icon: Icon(Icons.history),
             label: 'Histórico',
           ),
           BottomNavigationBarItem(
