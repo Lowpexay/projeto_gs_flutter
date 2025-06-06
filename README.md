@@ -114,4 +114,4 @@ MIT
 
 ---
 
-🚀
+[Site do projeto](https://gemini.google.com/share/8599b315dcbd) 🚀
