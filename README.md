@@ -24,7 +24,7 @@ Este é um aplicativo Flutter para monitoramento de eventos climáticos, com fun
 - [Image Picker](https://pub.dev/packages/image_picker)
 - [Provider](https://pub.dev/packages/provider)
 - USGS USA Government Earthquake API
-- Twilio
+- Telegram BOT API
 
 ## Estrutura do Projeto
 
