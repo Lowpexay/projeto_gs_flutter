@@ -5,6 +5,7 @@ Este é um aplicativo Flutter para monitoramento de eventos climáticos, com fun
 ## Funcionalidades
 
 - **Cadastro e Login**: Usuários podem se cadastrar informando nome, sobrenome, e-mail, senha e se são PCD. Autenticação via Firebase Auth.
+- **Registro de clima atual**: Tela inicial do aplicativo. Mostra alertas em tempo real na tela selecionada pelo usuário, mostrando também a temperatura dos próximos 5 dias.
 - **Chatbot**: Assistente virtual que responde dúvidas sobre segurança em eventos climáticos, usando IA (Google Gemini API).
 - **Reportar Evento**: Usuário pode reportar eventos climáticos críticos, anexar foto, localização e descrição. O sistema valida o risco via IA.
 - **Prioridade PCD**: Usuários PCD recebem aviso de prioridade ao enviar reportes críticos.
@@ -21,6 +22,8 @@ Este é um aplicativo Flutter para monitoramento de eventos climáticos, com fun
 - [Geolocator](https://pub.dev/packages/geolocator)
 - [Image Picker](https://pub.dev/packages/image_picker)
 - [Provider](https://pub.dev/packages/provider)
+- USGS USA Government Earthquake API
+- Twilio
 
 ## Estrutura do Projeto
 
@@ -77,6 +80,10 @@ lib/
 - Campos: Nome, Sobrenome, E-mail, Senha, PCD (switch).
 - Usuário PCD recebe prioridade nos reportes.
 
+### Alertas/Clima Atual
+- Tela com os alertas em tempo real no localização selecionada pelo usuário. Demonstrando também o clima nos próximos 5 dias
+- Inclui a API USGS USA Government Earthquake API que gera reportes de alertar sísmicos
+
 ### Chatbot
 
 - Mensagem inicial personalizada com o nome do usuário.
@@ -106,4 +113,4 @@ MIT
 
 ---
 
-Desenvolvido por [Seu Nome] 🚀
+🚀
