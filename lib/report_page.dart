@@ -30,6 +30,9 @@ class _ReportPageState extends State<ReportPage> {
   String? _nomeUsuario;
   bool _isPCD = false;
 
+  static const String telegramBotToken = '';
+  static const String telegramChatId = '';
+
   final List<String> _eventTypes = [
     'Chuva muito forte',
     'Enchente',
@@ -204,6 +207,83 @@ class _ReportPageState extends State<ReportPage> {
     }
   }
 
+  // --- FUNÇÃO PARA ENVIAR PARA O TELEGRAM ---
+  Future<void> _sendReportToTelegram({
+    required String eventType,
+    required String description,
+    required String location,
+    required String weather,
+    required String userName,
+    required bool isPCD,
+    File? imageFile,
+    required double latitude,
+    required double longitude,
+  }) async {
+    final String message = """
+      🚨 *NOVO REPORTE DE EVENTO CLIMÁTICO CRÍTICO!* 🚨
+
+      ---
+
+      *Tipo de Evento:* ⚠️ $eventType
+
+      *Descrição:* 📝 $description
+
+      *Localização:* 📍 $location
+      *Coordenadas:* 🗺️ Lat: $latitude, Lon: $longitude
+
+      *Clima na Localização:* ☁️ $weather
+
+      *Reportado por:* 👤 $userName
+      ${isPCD ? '\n*Prioridade:* ♿ Sim (Pessoa com Deficiência)' : ''}
+
+      [Ver no Google Maps](http://maps.google.com/?q=$latitude,$longitude)
+      """;
+
+    // Enviar mensagem de texto
+    try {
+      final textResponse = await http.post(
+        Uri.parse('https://api.telegram.org/bot$telegramBotToken/sendMessage'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'chat_id': telegramChatId,
+          'text': message,
+          'parse_mode': 'Markdown',
+        }),
+      );
+
+      if (textResponse.statusCode == 200) {
+        print('Mensagem de texto enviada para o Telegram com sucesso!');
+      } else {
+        print('Erro ao enviar mensagem de texto para o Telegram: ${textResponse.statusCode} - ${textResponse.body}');
+      }
+    } catch (e) {
+      print('Exceção ao enviar mensagem de texto para o Telegram: $e');
+    }
+
+    // Enviar imagem, se existir
+    if (imageFile != null) {
+      try {
+        final request = http.MultipartRequest(
+          'POST',
+          Uri.parse('https://api.telegram.org/bot$telegramBotToken/sendPhoto'),
+        )
+          ..fields['chat_id'] = telegramChatId
+          ..files.add(await http.MultipartFile.fromPath('photo', imageFile.path));
+
+        final streamedResponse = await request.send();
+        final response = await http.Response.fromStream(streamedResponse);
+
+        if (response.statusCode == 200) {
+          print('Imagem enviada para o Telegram com sucesso!');
+        } else {
+          print('Erro ao enviar imagem para o Telegram: ${response.statusCode} - ${response.body}');
+        }
+      } catch (e) {
+        print('Exceção ao enviar imagem para o Telegram: $e');
+      }
+    }
+  }
+
   Future<void> _submitReport() async {
     if (!_formKey.currentState!.validate() || _imageFile == null || _position == null) {
       setState(() {
@@ -227,6 +307,18 @@ class _ReportPageState extends State<ReportPage> {
       });
       return;
     }
+
+    await _sendReportToTelegram(
+      eventType: _selectedEvent!,
+      description: _description!,
+      location: _placeName ?? 'Não informado',
+      weather: _weatherDescription ?? 'Não informado',
+      userName: _nomeUsuario ?? 'Usuário Anônimo',
+      isPCD: _isPCD,
+      imageFile: _imageFile,
+      latitude: _position!.latitude,
+      longitude: _position!.longitude,
+    );
 
     setState(() {
       _isLoading = false;
